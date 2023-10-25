@@ -1,0 +1,432 @@
+---
+title: "Ice Cream Sales Analysis and Predictive Modeling"
+author: "Jeremiah Akintomide"
+date: "2023-10-25"
+output: html_document
+---
+
+
+# Part 1: Exploratory Data Analysis
+
+```{r}
+
+# Load required libraries
+library(ggplot2)
+library(dplyr)
+
+# Read the sales data from your data file
+sales_data <- read.csv("sales_data.csv")
+
+# View the first few rows of the dataset
+head(sales_data)
+
+# Check column names and data types
+str(sales_data)
+
+# Data Exploration
+
+# Create a histogram for temperature
+ggplot(sales_data, aes(x = temperature)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(
+    title = "Distribution of Temperature",
+    x = "Temperature (°C)",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+
+#Humidity Distribution
+
+# Create a histogram for humidity
+ggplot(sales_data, aes(x = humidity)) +
+  geom_histogram(binwidth = 5, fill = "lightcoral", color = "black") +
+  labs(
+    title = "Distribution of Humidity",
+    x = "Humidity (%)",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+
+#Monthly Sales
+
+# Calculate the average ice cream sales per month
+monthly_sales <- sales_data %>%
+  group_by(month_name) %>%
+  summarize(avg_icecream_sales = mean(icecream_sales))
+
+# Create a bar plot for monthly ice cream sales
+ggplot(monthly_sales, aes(x = month_name, y = avg_icecream_sales)) +
+  geom_bar(stat = "identity", fill = "lightseagreen") +
+  labs(
+    title = "Average Ice Cream Sales per Month",
+    x = "Month",
+    y = "Average Ice Cream Sales"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+## Interpretation of the graph 
+
+The three graphs provide a comprehensive overview of the distribution of humidity, temperature, and average ice cream sales per month.
+1.	Distribution of Humidity: The first graph presents the distribution of humidity levels. The graph is characterized by a relatively uniform distribution, indicating that there is no significant variation in humidity levels over the period under consideration. This suggests that humidity does not exhibit any distinct peaks and is evenly spread across the range.
+2.	Distribution of Temperature: The second graph depicts the distribution of temperature levels. The graph appears to follow a normal distribution, centered around a specific temperature. This indicates that most of the temperature observations are close to this central value, with fewer observations as the temperature increases or decreases from this point.
+3.	Average Ice Cream Sales per Month: The third graph illustrates the average ice cream sales per month. The sales pattern exhibits a bimodal distribution, with two distinct peaks observed in the data. This could suggest seasonality in ice cream sales, with certain months experiencing higher sales volumes.
+
+
+# Part 2: Statistical Analysis and Hypothesis Testing
+
+```{r }
+library(dplyr)
+
+# Read the sales data from your data file
+sales_data <- read.csv("sales_data.csv")
+
+#2.1
+# Calculate the proportion of days with fewer than 200 ice cream sales
+prop_less_than_200_icecream <- mean(sales_data$icecream_sales < 200)
+
+# Calculate the 95% confidence interval for the proportion
+conf_interval <- prop.test(sum(sales_data$icecream_sales < 200), nrow(sales_data), conf.level = 0.95)$conf.int
+
+# Display the results
+prop_less_than_200_icecream
+conf_interval
+
+
+```
+
+## 2.1. Estimated Proportion of Days with Fewer than 200 Ice Cream Sales:
+The estimated proportion of days with fewer than 200 ice cream sales is approximately 0.3495. This means that, on average, about 34.95% of the days in the dataset have ice cream sales below 200.
+To enhance our confidence in this estimate, a 95% confidence interval was computed. The confidence interval ranges from 0.2599 to 0.4505. This interval indicates that we can be 95% confident that the true proportion of days with ice cream sales below 200 falls within this range.
+In summary, the analysis suggests that around 34.95% of the days have ice cream sales below 200, with a reasonably wide confidence interval due to the variability in the data.
+
+
+```{r}
+
+
+# Calculate the proportion of days with total sales (ice cream + hot drinks) below 200
+total_sales <- sales_data$icecream_sales + sales_data$hotdrink_sales
+prop_less_than_200_total <- mean(total_sales < 200)
+
+# Calculate the 95% confidence interval for the proportion
+conf_interval_total <- prop.test(sum(total_sales < 200), nrow(sales_data), conf.level = 0.95)$conf.int
+
+# Display the results
+prop_less_than_200_total
+conf_interval_total
+
+
+```
+
+
+## 2.2. Estimated Proportion of Days with Fewer than 200 Total Sales (Ice Cream and Hot Drinks Combined):
+The estimated proportion of days with total sales (including both ice cream and hot drinks) below 200 is approximately 0.1845. This indicates that, on average, around 18.45% of the days in the dataset have total sales below 200.
+A 95% confidence interval was calculated to enhance our confidence in this estimate. The confidence interval ranges from 0.1174 to 0.2756. This interval suggests that we can be 95% confident that the true proportion of days with total sales below 200 falls within this range.
+In summary, the analysis indicates that approximately 18.45% of the days have total sales below 200, with a reasonably wide confidence interval reflecting the variability in the data.
+
+
+```{r}
+# Subset the data for January and August
+january_data <- subset(sales_data, month_name == "Jan")
+august_data <- subset(sales_data, month_name == "Aug")
+
+# Calculate the odds ratio for January
+odds_january <- sum(january_data$icecream_sales > 0) / sum(january_data$hotdrink_sales > 0)
+
+# Calculate the odds ratio for August
+odds_august <- sum(august_data$icecream_sales > 0) / sum(august_data$hotdrink_sales > 0)
+
+# Calculate 95% confidence intervals for both odds ratios
+conf_interval_january <- exp(c(log(odds_january) - 1.96 * sqrt(1 / sum(january_data$icecream_sales > 0) + 1 / sum(january_data$hotdrink_sales > 0)),
+                               log(odds_january) + 1.96 * sqrt(1 / sum(january_data$icecream_sales > 0) + 1 / sum(january_data$hotdrink_sales > 0))))
+
+conf_interval_august <- exp(c(log(odds_august) - 1.96 * sqrt(1 / sum(august_data$icecream_sales > 0) + 1 / sum(august_data$hotdrink_sales > 0)),
+                              log(odds_august) + 1.96 * sqrt(1 / sum(august_data$icecream_sales > 0) + 1 / sum(august_data$hotdrink_sales > 0))))
+                            
+ # Display the results
+  odds_january
+  conf_interval_january
+  odds_august
+  conf_interval_august
+```
+
+## 2.3. Odds Ratio for Ice Cream Purchase vs. Hot Drink Purchase in January and August:
+For January:
+•	The odds ratio for a purchase being an ice cream rather than a hot drink in January is 1. This means that, in January, there is an equal likelihood of customers purchasing ice cream or hot drinks. An odds ratio of 1 suggests no difference in the odds of choosing ice cream over hot drinks.
+•	The 95% confidence interval for the January odds ratio ranges from approximately 0.397 to 2.519. While the point estimate is 1 (indicating equal odds), the confidence interval includes a wide range of possibilities, reflecting the uncertainty in the data.
+For August:
+•	Similarly, the odds ratio for a purchase being an ice cream rather than a hot drink in August is also 1, indicating a similar likelihood of customers choosing ice cream or hot drinks during this month. As in January, an odds ratio of 1 suggests no difference in the odds of choosing ice cream over hot drinks.
+•	The 95% confidence interval for the August odds ratio ranges from about 0.477 to 2.098. This confidence interval includes a broad range of values, indicating uncertainty in the odds ratio.
+
+*Interpretation*: Based on the results, there is no significant difference in the odds of customers choosing ice cream over hot drinks in both January and August. The odds ratios are close to 1, indicating that customers have approximately equal odds of purchasing either product. The wide confidence intervals suggest a level of uncertainty in the exact odds ratio values.
+
+
+```{r}
+
+  # Filter the data for January and August
+  january_data <- sales_data %>% filter(month_name == "Jan")
+  august_data <- sales_data %>% filter(month_name == "Aug")
+  
+  # Calculate the odds ratio for January
+  odds_january <- sum(january_data$icecream_sales > 0) / sum(january_data$hotdrink_sales > 0)
+  
+  # Calculate the odds ratio for August
+  odds_august <- sum(august_data$icecream_sales > 0) / sum(august_data$hotdrink_sales > 0)
+  
+  # Calculate the standard errors for the odds ratios in January and August
+  se_january <- sqrt(1 / sum(january_data$icecream_sales > 0) + 1 / sum(january_data$hotdrink_sales > 0))
+  se_august <- sqrt(1 / sum(august_data$icecream_sales > 0) + 1 / sum(august_data$hotdrink_sales > 0))
+  
+  # Calculate the test statistic
+  test_statistic <- (log(odds_january) - log(odds_august)) / sqrt(se_january^2 + se_august^2)
+  
+  # Calculate the degrees of freedom
+  df <- min(sum(january_data$icecream_sales > 0), sum(january_data$hotdrink_sales > 0),
+            sum(august_data$icecream_sales > 0), sum(august_data$hotdrink_sales > 0)) - 1
+  
+  # Calculate the p-value
+  p_value <- 2 * (1 - pt(abs(test_statistic), df))
+  
+  # Display the results
+  cat("Test Statistic:", test_statistic, "\n")
+  cat("Degrees of Freedom:", df, "\n")
+  cat("P-Value:", p_value, "\n")
+```
+
+## 2.4. Comparison of Odds Ratios for Ice Cream Purchase vs. Hot Drink Purchase in January and August:
+
+In this test, we are comparing the odds ratios for purchasing ice cream versus hot drinks in January and August. Here's the interpretation of the results:
+•	Test Statistic: The test statistic is 0, indicating that there is no significant difference between the odds ratios for purchasing ice cream and hot drinks in January and August. A test statistic of 0 suggests that there is no effect or association.
+•	Degrees of Freedom: The degrees of freedom for this test are 8. This value represents the number of independent observations that were used to calculate the test statistic. In this case, it's 8.
+•	P-Value: The p-value is 1, which is quite high. A p-value of 1 indicates that there is no significant difference between the odds ratios in January and August. It suggests that any observed differences are likely due to chance, and there is no evidence of a real effect or association.
+
+*Interpretation*: Based on the results of the test, there is no significant difference in the odds of customers choosing ice cream over hot drinks between January and August. The test suggests that any variations observed in the odds ratios are likely due to random fluctuations, and there is no statistically significant effect.
+
+
+# Part 3 Statistical Power and Sample Size Analysis:
+```{r}
+# Filter the data for weekdays (Mon-Fri) and weekends
+  weekday_data <- sales_data %>% filter(weekend == 0)
+  weekend_data <- sales_data %>% filter(weekend == 1)
+  
+  # Calculate the mean number of ice cream sales for weekdays and weekends
+  mean_sales_weekday <- mean(weekday_data$icecream_sales)
+  mean_sales_weekend <- mean(weekend_data$icecream_sales)
+  
+  # Perform a t-test to compare the means
+  t_test_result <- t.test(weekday_data$icecream_sales, weekend_data$icecream_sales)
+  
+  # Display the results
+  cat("Mean Ice Cream Sales on Weekdays:", mean_sales_weekday, "\n")
+  cat("Mean Ice Cream Sales on Weekends:", mean_sales_weekend, "\n")
+  cat("T-Test P-Value:", t_test_result$p.value, "\n")
+```
+
+## 3.1. Difference Between Expected Ice Cream Sales on Weekdays and Weekends:
+•	Mean Ice Cream Sales on Weekdays: The average number of ice cream sales on weekdays (Monday to Friday) is approximately 225.52.
+•	Mean Ice Cream Sales on Weekends: The average number of ice cream sales on weekends is significantly higher, approximately 411.43.
+•	T-Test P-Value: The p-value from the t-test is approximately 8.009e-07 (or 0.0000008009). This is an extremely small p-value.
+
+*Interpretation*: The results of the t-test indicate a significant difference in the expected number of ice cream sales between weekdays and weekends. The p-value is extremely small, suggesting that the observed difference in means is highly unlikely to have occurred by random chance.
+Customers tend to purchase more ice cream on weekends compared to weekdays. This finding could be valuable for the ice cream shop's business operations and marketing strategies.
+
+
+```{r}
+library(pwr)
+
+
+  # 3.2: Calculate the observed effect size (use the effect size from question 3.2)
+  observed_effect_size_3.2 <- 1.048887
+  
+  # Set the significance level (alpha)
+  alpha <- 0.05
+  
+  # Calculate the sample size for weekdays
+  n_weekdays <- nrow(weekday_data)
+  
+  # Perform a power analysis based on the observed effect size
+  power_analysis <- pwr.t.test(d = observed_effect_size_3.2, n = n_weekdays, sig.level = alpha, type = "two.sample", alternative = "two.sided")
+  
+  # Extract the power value from the analysis
+  power <- power_analysis$power
+  
+  # Display the power of the test
+  cat("Power of the Test (observed effect size):", power, "\n")
+  
+```
+## 3.2 Interpretation 
+
+The high power of the test (approximately 0.9996) for the observed effect size in question 3.2 indicates that the statistical test is robust in detecting a significant difference in ice cream sales between weekdays and weekends. A high power value signifies that the test is highly likely to correctly identify an existing difference when one truly exists.
+This suggests that the sample size and observed effect size are sufficient for the test to effectively distinguish between the two groups (weekdays and weekends). In practical terms, this means that if there is a real difference in ice cream sales patterns between weekdays and weekends, our statistical test is well-equipped to detect it with a high level of confidence.
+It's important to note that a high power value is desirable in hypothesis testing, as it minimizes the risk of Type II errors (failing to detect a real difference). In this context, it provides strong support for the validity of our analysis and conclusions
+
+
+```{r}
+  #3.3
+  
+  # Required libraries
+  library(pwr)
+  
+  # Set the parameters
+  n <- 103
+  alpha <- 0.05
+  power <- 0.9
+  
+  # Calculate the effect size
+  effect_size <- pwr.t.test(n = n, sig.level = alpha, power = power, type = "two.sample")$d
+  
+  effect_size
+```
+
+## Interpretation for Question 3.3:
+
+To achieve a power of 90% in the test comparing the expected number of sales on weekdays (Mon-Fri) and weekends with the observed sample size of 103, an effect size of approximately 0.4538 is required. This suggests that a moderate difference in sales between weekdays and weekends would need to be present to reliably detect such differences with a 90% probability.
+This interpretation implies that the test may not have sufficient power to detect smaller differences, and if precise detection of smaller effects is important, increasing the sample size may be necessary.
+
+
+```{r}
+ #3.4
+  
+  # Given effect size and desired power
+  effect_size <- 0.4538
+  desired_power <- 0.90
+  
+  # Calculate the required sample size
+  required_sample_size <- pwr.t.test(d = effect_size, power = desired_power, type = "two.sample", alternative = "two.sided")
+  
+  # Display the required sample size
+  required_sample_size$n
+```
+# Interpretation for 3.4
+
+In the analysis, the calculated required sample size was approximately 103.02. This finding suggests that, to confidently detect the specified effect size with a 90% probability, a dataset comprising around 103 observations is needed.
+
+
+
+# Part 4 Predictive Modeling and Scenario Analysis:
+
+```{r}
+# Fit a linear regression model
+  ice_cream_model <- lm(icecream_sales ~ temperature + humidity + windspeed + weekend + bank_holiday + school_holidays, data = sales_data)
+  
+  # Summary of the regression model
+  summary(ice_cream_model)
+  
+  
+# Create a linear regression model
+lm_model <- lm(icecream_sales ~ temperature + humidity + windspeed + weekend + bank_holiday + school_holidays, data = sales_data)
+
+# Define the conditions for the scenario
+conditions <- data.frame(
+  month_name = "May",
+  weekend = 0,  # Weekday
+  bank_holiday = 0,
+  school_holidays = 0,
+  temperature = 18,
+  humidity = 6,
+  windspeed = 10
+)
+
+# Predict ice cream sales for the given conditions
+predicted_sales <- predict(lm_model, newdata = conditions, interval = "prediction", level = 0.95)
+
+# Display the results
+cat("Expected Ice Cream Sales on a Weekday in May: ", predicted_sales[1], "\n")
+cat("95% Prediction Interval: (", predicted_sales[2], ", ", predicted_sales[3], ")\n")
+```
+
+
+## 4.1 Interpretation of Expected Ice Cream Sales for a Weekday in May
+
+For a typical weekday in the month of May with specific weather conditions, the estimated number of ice creams the ice cream shop can expect to sell is approximately 186.76 units. This prediction accounts for the variables like temperature, humidity, windspeed, as well as other factors such as whether it's a weekend, bank holiday, or school holiday.
+
+### 95% Prediction Interval
+
+The 95% prediction interval provides a range within which we can be reasonably confident that the actual ice cream sales will fall. In this case, the 95% prediction interval spans from approximately 34.79 to 338.72 units. This means that, while the expected sales are around 186.76 units, there is a 95% chance that the actual sales will be within this interval.
+
+
+
+
+```{r}
+# 4.2  Define the conditions for the scenario
+conditions_4.2 <- data.frame(
+  month_name = "April",
+  weekend = 1,  # Weekend
+  bank_holiday = 0,
+  school_holidays = 1,
+  temperature = 28,
+  humidity = 35,
+  windspeed = 5
+)
+
+# Predict ice cream sales for the given conditions using the linear regression model (lm_model)
+predicted_sales_4.2 <- predict(lm_model, newdata = conditions_4.2, interval = "prediction", level = 0.95)
+
+# Display the results
+cat("Expected Ice Cream Sales on a School Holiday Weekend in April: ", predicted_sales_4.2[1], "\n")
+cat("95% Prediction Interval: (", predicted_sales_4.2[2], ", ", predicted_sales_4.2[3], ")\n")
+```
+# 4.2 School Holiday on a Weekend in April
+•	Temperature: 28°C
+•	Humidity: 35%
+•	Windspeed: 5 km/h
+
+The linear regression model predicts that, under the specified conditions, the ice cream shop can expect to sell approximately 809.49 ice creams. Additionally, a 95% prediction interval is calculated to provide a range of possible sales, with a lower bound of approximately 653.96 and an upper bound of around 965.02.
+This means that on a school holiday weekend in April with mild temperatures, moderate humidity, and gentle winds, the shop is likely to experience a surge in ice cream sales, with an expected number of sales around 809.49. The prediction interval reflects the uncertainty associated with this estimate, indicating that sales could fall within the range of 653.96 to 965.02. This information can guide the shop's inventory and staffing decisions for optimal service during such conditions.
+
+```{r}
+#4.3
+
+# Define the conditions for the scenario
+conditions_4.3 <- data.frame(
+  month_name = "September",
+  weekend = 0,  # Weekday
+  bank_holiday = 0,
+  school_holidays = 0,
+  temperature = 12,
+  humidity = 90,
+  windspeed = 35
+)
+
+# Predict ice cream sales for the given conditions
+predicted_sales_4.3 <- predict(lm_model, newdata = conditions_4.3, interval = "prediction", level = 0.95)
+
+# Display the results
+cat("Expected Ice Cream Sales on a Weekday in September: ", predicted_sales_4.3[1], "\n")
+cat("95% Prediction Interval: (", predicted_sales_4.3[2], ", ", predicted_sales_4.3[3], ")\n")
+```
+## 4.3 Interpretation and Implication
+For a weekday in September with weather conditions including 12°C temperature, 90% humidity, and 35 km/h winds, the estimated expected ice cream sales are approximately 2.17. However, the wide 95% prediction interval (-166.26 to 170.60) reflects high sales uncertainty.
+The negative lower bound suggests a significant potential sales decrease, while the upper bound indicates a limited possibility of increased sales. This unpredictability highlights the need for caution in managing inventory and staffing under such weather conditions, emphasizing adaptability in a weather-sensitive business.
+
+
+```{r}
+#4.4
+
+# Define the conditions for Scenario 4.3
+conditions_4.4 <- data.frame(
+  month_name = "Jan",
+  weekend = 1,  # Weekend (not a holiday)
+  bank_holiday = 0,
+  school_holidays = 0,
+  temperature = -2,
+  humidity = 75,
+  windspeed = 15
+)
+
+# Predict ice cream sales for the given conditions
+predicted_sales_4.4 <- predict(lm_model, newdata = conditions_4.4, interval = "prediction", level = 0.95)
+
+# Display the results
+cat("Expected Ice Cream Sales on a January Weekend (Not a Holiday): ", predicted_sales_4.4[1], "\n")
+cat("95% Prediction Interval: (", predicted_sales_4.4[2], ", ", predicted_sales_4.4[3], ")\n")
+```
+## Interpretation for 4.4
+
+For a day on a January weekend that is not a holiday, with a temperature of -2°C, 75% humidity, and 15 km/h windspeed, the estimated expected ice cream sales are approximately 46.68 units. However, it's essential to note that the prediction comes with a 95% prediction interval, which ranges from -108.10 units to 201.46 units.
+This wide prediction interval suggests that there is a substantial degree of uncertainty associated with the estimated ice cream sales on such a day. The negative lower bound indicates the possibility of lower sales, perhaps due to the cold weather, while the upper bound represents a more optimistic scenario with potentially higher sales.
+The results indicate that factors like weather conditions and holiday status have a considerable impact on ice cream sales, leading to a wide range of potential outcomes. Understanding these variations is crucial for effective business planning and resource allocation.
+
+
+
