@@ -2,7 +2,9 @@
 title: "Ice Cream Sales Analysis and Predictive Modeling"
 author: "Jeremiah Akintomide"
 date: "2023-10-25"
-output: html_document
+output:
+  word_document: default
+  html_document: default
 ---
 
 
@@ -13,6 +15,7 @@ output: html_document
 # Load required libraries
 library(ggplot2)
 library(dplyr)
+library(heatmaply)
 
 # Read the sales data from your data file
 sales_data <- read.csv("sales_data.csv")
@@ -25,27 +28,31 @@ str(sales_data)
 
 # Data Exploration
 
-# Create a histogram for temperature
-ggplot(sales_data, aes(x = temperature)) +
-  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+# Create a scatter plot to show the relationship between temperature and ice cream sales
+ggplot(sales_data, aes(x = temperature, y = icecream_sales)) +
+  geom_point(color = "royalblue") +
   labs(
-    title = "Distribution of Temperature",
+    title = "Relationship Between Temperature and Ice Cream Sales",
     x = "Temperature (°C)",
-    y = "Frequency"
+    y = "Ice Cream Sales"
   ) +
   theme_minimal()
+
 
 #Humidity Distribution
 
-# Create a histogram for humidity
-ggplot(sales_data, aes(x = humidity)) +
-  geom_histogram(binwidth = 5, fill = "lightcoral", color = "black") +
+library(ggplot2)
+
+ggplot(sales_data, aes(x = humidity, y = icecream_sales)) +
+  geom_point() +
   labs(
-    title = "Distribution of Humidity",
+    title = "Scatter Plot of Humidity vs. Ice Cream Sales",
     x = "Humidity (%)",
-    y = "Frequency"
+    y = "Ice Cream Sales"
   ) +
   theme_minimal()
+
+
 
 #Monthly Sales
 
@@ -64,6 +71,18 @@ ggplot(monthly_sales, aes(x = month_name, y = avg_icecream_sales)) +
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+# Calculate the correlation matrix
+correlation_matrix <- cor(sales_data[c("humidity", "temperature", "icecream_sales")])
+
+# Create a heatmap
+library(heatmaply)
+
+heatmaply(correlation_matrix, 
+          col = viridis(10), 
+          main = "Correlation Heatmap of Humidity, Temperature, and Ice Cream Sales")
+
 
 ```
 ## Interpretation of the graph 
